@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>BET</title>
+  </head>
+
+  <body>
+    <div>
+      <h1>Create bet</h1>
+      <button style="float:right" id="logout" type="button">Logout</button>
+    </div>
+
+    <form id="form">
+      <div>
+        <label for="name">Name</label>
+        <input id="name" type="text">
+      </div>
+
+      <div>
+        <label for="min">Minimum</label>
+        <input id="min" type="number">
+      </div>
+
+      <div>
+        <label for="max">Maximum</label>
+        <input id="max" type="number">
+      </div>
+
+      <div>
+        <button type="submit">Create</button>
+      </div>
+    </form>
+
+    <p id="message"></p>
+
+    <script>
+      (() => {
+        /** @type {HTMLElement} */
+        const message = document.getElementById(`message`);
+
+        /** @type {HTMLFormElement} */
+        const form = document.getElementById(`form`);
+        /** @type {HTMLInputElement} */
+        const name = document.getElementById(`name`);
+        /** @type {HTMLInputElement} */
+        const min = document.getElementById(`min`);
+        /** @type {HTMLInputElement} */
+        const max = document.getElementById(`max`);
+
+        form.onsubmit = e => {
+          e.preventDefault();
+          const nameValue = name.value;
+          const minValue = Number(min.value);
+          const maxValue = Number(max.value);
+
+          if (!nameValue || isNaN(minValue) || isNaN(maxValue)) {
+            message.innerText = `Missing values`;
+          }
+          else {
+            fetch(`/bet`, {
+              method: `post`,
+              headers: { "Content-Type": `application/json` },
+              body: JSON.stringify({
+                name: nameValue,
+                min: minValue,
+                max: maxValue,
+              }),
+            })
+            .then(res => res.json())
+            .then(res => {
+              if (res.error) message.innerText = res.error;
+              else window.location.href = `/bets/${res.id}`;
+            })
+            .catch(err => { message.innerText = err; });
+          }
+        };
+      })();
+    </script>
+    <script>
+      (() => {
+        /** @type {HTMLElement} */
+        const message = document.getElementById(`message`);
+        /** @type {HTMLButtonElement} */
+        const logout = document.getElementById(`logout`);
+
+        logout.onclick = () => {
+          fetch(`/logout`, { method: `post` })
+          .then(res => res.json())
+          .then(res => {
+            if (res.error) message.innerText = res.error;
+            else window.location.href = `/login`;
+          })
+          .catch(err => { message.innerText = err; });
+        };
+      })();
+    </script>
+  </body>
+</html>

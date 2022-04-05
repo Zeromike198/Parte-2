@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>BETS</title>
+  </head>
+
+  <body>
+    <div>
+      <h1>Bets</h1>
+      <button style="float:right" id="logout" type="button">Logout</button>
+    </div>
+
+    <ul id="list"></ul>
+
+    <a href="/bets/create">Create new bet</a>
+    <a href="/">Home</a>
+
+    <p id="message"></p>
+
+    <script>
+      (() => {
+        /** @type {HTMLUListElement} */
+        const list = document.getElementById(`list`);
+
+        fetch(`/bet`)
+        .then(res => res.json())
+        .then(res => {
+          if (res.error) message.innerText = res.error;
+          else {
+            res.forEach(bet => {
+              const element = document.createElement(`li`);
+              const link = document.createElement(`a`);
+
+              link.href = `/bets/${bet.id}`;
+              link.innerText = bet.name;
+
+              element.appendChild(link);
+              list.appendChild(element);
+            });
+          }
+        })
+        .catch(err => { message.innerText = err; });;
+      })();
+    </script>
+    <script>
+      (() => {
+        /** @type {HTMLElement} */
+        const message = document.getElementById(`message`);
+        /** @type {HTMLButtonElement} */
+        const logout = document.getElementById(`logout`);
+
+        logout.onclick = () => {
+          fetch(`/logout`, { method: `post` })
+          .then(res => res.json())
+          .then(res => {
+            if (res.error) message.innerText = res.error;
+            else window.location.href = `/login`;
+          })
+          .catch(err => { message.innerText = err; });
+        };
+      })();
+    </script>
+  </body>
+</html>

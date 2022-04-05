@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>BET</title>
+  </head>
+
+  <body>
+    <div>
+      <h1>Bet</h1>
+      <button style="float:right" id="logout" type="button">Logout</button>
+    </div>
+
+    <form id="form">
+      <div>
+        <label for="name">Name</label>
+        <input id="name" type="text">
+      </div>
+
+      <div>
+        <label for="open">Is open</label>
+        <input id="open" type="checkbox" readonly>
+      </div>
+
+      <div>
+        <label for="value">Value</label>
+        <input id="value" type="value" readonly>
+      </div>
+
+      <div>
+        <label for="min">Minimum</label>
+        <input id="min" type="number" readonly>
+      </div>
+
+      <div>
+        <label for="max">Maximum</label>
+        <input id="max" type="number" readonly>
+      </div>
+
+      <div>
+        <label for="prize">Prize</label>
+        <input id="prize" type="number" readonly>
+      </div>
+
+      <div>
+        <label for="winner">Winner</label>
+        <input id="winner" type="text">
+      </div>
+
+      <div>
+        <button type="submit">Update</button>
+        <button id="delete" type="button">Delete</button>
+      </div>
+    </form>
+
+    <h2>Entries</h2>
+    <ul id="entries"></ul>
+
+    <form id="bet">
+      <div>
+        <label for="number">Value</label>
+        <input id="number" type="number">
+      </div>
+
+      <div>
+        <label for="money">Money</label>
+        <input id="money" type="number">
+      </div>
+
+      <div>
+        <button type="submit">Do bet!</button>
+      </div>
+    </form>
+
+    <div>
+      <button id="close" type="button">Close bet</button>
+    </div>
+
+    <a href="/bets">List of bets</a>
+
+    <p id="message"></p>
+
+    <script>
+      (() => {
+        const href = window.location.href;
+        const id = href.slice(href.lastIndexOf(`/`) + 1);
+
+        /** @type {HTMLElement} */
+        const message = document.getElementById(`message`);
+
+        /** @type {HTMLFormElement} */
+        const form = document.getElementById(`form`);
+        /** @type {HTMLButtonElement} */
+        const del = document.getElementById(`delete`);
+        /** @type {HTMLInputElement} */
+        const name = document.getElementById(`name`);
+        /** @type {HTMLInputElement} */
+        const open = document.getElementById(`open`);
+        /** @type {HTMLInputElement} */
+        const value = document.getElementById(`value`);
+        /** @type {HTMLInputElement} */
+        const min = document.getElementById(`min`);
+        /** @type {HTMLInputElement} */
+        const max = document.getElementById(`max`);
+        /** @type {HTMLInputElement} */
+        const prize = document.getElementById(`prize`);
+        /** @type {HTMLInputElement} */
+        const winner = document.getElementById(`winner`);
+
+        /** @type {HTMLUListElement} */
+        const entries = document.getElementById(`entries`);
+
+        /** @type {HTMLFormElement} */
+        const bet = document.getElementById(`bet`);
+        /** @type {HTMLInputElement} */
+        const number = document.getElementById(`number`);
+        /** @type {HTMLInputElement} */
+        const money = document.getElementById(`money`);
+
+        /** @type {HTMLButtonElement} */
+        const close = document.getElementById(`close`);
+
+        form.onsubmit = e => {
+          e.preventDefault();
+          const nameValue = name.value;
+
+          if (!nameValue) {
+            message.innerText = `Missing values`;
+          }
+          else {
+            fetch(`/bet/${id}`, {
+              method: `put`,
+              headers: { "Content-Type": `application/json` },
+              body: JSON.stringify({
+                name: nameValue,
+              }),
+            })
+            .then(res => res.json())
+            .then(res => {
+              if (res.error) message.innerText = res.error;
+              else message.innerText = `Updated!`;
+            })
+            .catch(err => { message.innerText = err; });
+          }
+        };
+
+        del.onclick = () => {
+          fetch(`/bet/${id}`, { method: `delete` })
+          .then(res => res.json())
+          .then(res => {
+            if (res.error) message.innerText = res.error;
+            else window.location.href = `/bets`;
+          })
+          .catch(err => { message.innerText = err; });
+        };
+
+        bet.onsubmit = e => {
+          e.preventDefault();
+          const numberValue = Number(number.value);
+          const moneyValue = Number(money.value);
+
+          if (isNaN(numberValue) || isNaN(moneyValue)) {
+            message.innerText = `Missing values`;
+          }
+          else {
+            fetch(`/bet/${id}/do`, {
+              method: `put`,
+              headers: { "Content-Type": `application/json` },
+              body: JSON.stringify({
+                value: numberValue,
+                ammount: moneyValue,
+              }),
+            })
+            .then(res => res.json())
+            .then(res => {
+              if (res.error) message.innerText = res.error;
+              else {
+                const element = document.createElement(`li`);
+                const entry = res.BetEntries.find(e => e.value === numberValue);
+                element.innerText = `#${numberValue} ($${moneyValue}) ${entry.User.fullName}`;
+                entries.appendChild(element);
+
+                number.value = ``;
+                money.value = ``;
+                prize.value = Number(prize.value) + moneyValue;
+                message.innerText = `Bet made!`;
+              }
+            })
+            .catch(err => { message.innerText = err; });
+          }
+        };
+
+        close.onclick = () => {
+          fetch(`/bet/${id}/close`, {
+              method: `put`,
+            })
+            .then(res => res.json())
+            .then(res => {
+              if (res.error) message.innerText = res.error;
+              else {
+                open.checked = res.open;
+                value.value = res.value;
+                winner.value = res.User ? res.User.firstName : `-`;
+                message.innerText = `Bet closed!`;
+              }
+            })
+            .catch(err => { message.innerText = err; });
+        };
+
+        fetch(`/bet/${id}`)
+        .then(res => res.json())
+        .then(res => {
+          if (res.error) message.innerText = res.error;
+          else {
+            name.value = res.name;
+            open.checked = res.open;
+            value.value = res.value || `-`;
+            min.value = res.min;
+            max.value = res.max;
+            winner.value = res.User ? res.User.fullName : `-`;
+
+            let ammount = 0;
+            for (const e of res.BetEntries) {
+              const element = document.createElement(`li`);
+              element.innerText = `#${e.value} ($${e.ammount}) ${e.User.fullName}`;
+              entries.appendChild(element);
+
+              ammount += e.ammount;
+            }
+            prize.value = ammount;
+          }
+        })
+        .catch(err => { message.innerText = err; });
+      })();
+    </script>
+    <script>
+      (() => {
+        /** @type {HTMLElement} */
+        const message = document.getElementById(`message`);
+        /** @type {HTMLButtonElement} */
+        const logout = document.getElementById(`logout`);
+
+        logout.onclick = () => {
+          fetch(`/logout`, { method: `post` })
+          .then(res => res.json())
+          .then(res => {
+            if (res.error) message.innerText = res.error;
+            else window.location.href = `/login`;
+          })
+          .catch(err => { message.innerText = err; });
+        };
+      })();
+    </script>
+  </body>
+</html>

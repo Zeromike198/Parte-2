@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>CREATE USER</title>
+  </head>
+
+  <body>
+    <div>
+      <h1>Create user</h1>
+      <button style="float:right" id="logout" type="button">Logout</button>
+    </div>
+
+    <form id="form">
+      <div>
+        <label for="username">Username</label>
+        <input id="username" type="text">
+      </div>
+
+      <div>
+        <label for="fullName">Full name</label>
+        <input id="fullName" type="text">
+      </div>
+
+      <div>
+        <label for="password">Password</label>
+        <input id="password" type="password">
+      </div>
+
+      <div>
+        <label for="admin">Is administrator</label>
+        <input id="admin" type="checkbox">
+      </div>
+
+      <div>
+        <label for="money">Money</label>
+        <input id="money" type="number">
+      </div>
+
+      <div>
+        <button type="submit">Create</button>
+      </div>
+    </form>
+
+    <a href="/users">List of users</a>
+
+    <p id="message"></p>
+
+    <script>
+      (() => {
+        const href = window.location.href;
+        const id = href.slice(href.lastIndexOf(`/`) + 1);
+
+        /** @type {HTMLElement} */
+        const message = document.getElementById(`message`);
+
+        /** @type {HTMLFormElement} */
+        const form = document.getElementById(`form`);
+        /** @type {HTMLInputElement} */
+        const username = document.getElementById(`username`);
+        /** @type {HTMLInputElement} */
+        const fullName = document.getElementById(`fullName`);
+        /** @type {HTMLInputElement} */
+        const password = document.getElementById(`password`);
+        /** @type {HTMLInputElement} */
+        const admin = document.getElementById(`admin`);
+        /** @type {HTMLInputElement} */
+        const money = document.getElementById(`money`);
+
+        form.onsubmit = e => {
+          e.preventDefault();
+          const usernameValue = username.value;
+          const fullNameValue = fullName.value;
+          const passwordValue = password.value;
+          const adminValue = admin.checked;
+          const moneyValue = Number(money.value);
+
+          if (!usernameValue || !fullNameValue || !passwordValue || isNaN(moneyValue)) {
+            message.innerText = `Missing values`;
+          }
+          else {
+            fetch(`/user`, {
+              method: `post`,
+              headers: { "Content-Type": `application/json` },
+              body: JSON.stringify({
+                username: usernameValue,
+                fullName: fullNameValue,
+                password: passwordValue,
+                admin: adminValue,
+                money: moneyValue,
+              }),
+            })
+            .then(res => res.json())
+            .then(res => {
+              if (res.error) message.innerText = res.error;
+              else window.location.href = `/users/${res.id}`;
+            })
+            .catch(err => { message.innerText = err; });
+          }
+        };
+      })();
+    </script>
+    <script>
+      (() => {
+        /** @type {HTMLElement} */
+        const message = document.getElementById(`message`);
+        /** @type {HTMLButtonElement} */
+        const logout = document.getElementById(`logout`);
+
+        logout.onclick = () => {
+          fetch(`/logout`, { method: `post` })
+          .then(res => res.json())
+          .then(res => {
+            if (res.error) message.innerText = res.error;
+            else window.location.href = `/login`;
+          })
+          .catch(err => { message.innerText = err; });
+        };
+      })();
+    </script>
+  </body>
+</html>

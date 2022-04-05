@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>LOGIN</title>
+  </head>
+
+  <body>
+    <form id="form">
+      <div>
+        <label for="username">Username:</label>
+        <input id="username" type="text">
+      </div>
+
+      <div>
+        <label for="password">Password:</label>
+        <input id="password" type="password">
+      </div>
+
+      <div>
+        <button type="submit">Login</button>
+      </div>
+    </form>
+
+    <p id="message"></p>
+
+    <script>
+      (() => {
+        /** @type {HTMLElement} */
+        const message = document.getElementById(`message`);
+
+        /** @type {HTMLFormElement} */
+        const form = document.getElementById(`form`);
+        /** @type {HTMLInputElement} */
+        const username = document.getElementById(`username`);
+        /** @type {HTMLInputElement} */
+        const password = document.getElementById(`password`);
+
+        form.onsubmit = e => {
+          e.preventDefault();
+          const usernameValue = username.value;
+          const passwordValue = password.value;
+
+          if (!usernameValue || !passwordValue) {
+            message.innerText = `Missing values`;
+          }
+          else {
+            fetch(`/login`, {
+              method: `post`,
+              headers: { "Content-Type": `application/json` },
+              body: JSON.stringify({
+                username: usernameValue,
+                password: passwordValue,
+              }),
+            })
+            .then(res => res.json())
+            .then(res => {
+              if (res.error) message.innerText = res.error;
+              else window.location.href = `/`;
+            })
+            .catch(err => { message.innerText = err; });
+          }
+        };
+      })();
+    </script>
+  </body>
+</html>
